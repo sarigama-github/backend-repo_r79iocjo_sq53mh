@@ -1,48 +1,34 @@
 """
-Database Schemas
+Database Schemas for SnusQuit B2C App
 
-Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
-
-Each Pydantic model represents a collection in your database.
-Model name is converted to lowercase for the collection name:
-- User -> "user" collection
-- Product -> "product" collection
-- BlogPost -> "blogs" collection
+Each Pydantic model represents a collection in MongoDB. The collection name
+is the lowercase of the class name (e.g., User -> "user").
 """
-
 from pydantic import BaseModel, Field
-from typing import Optional
-
-# Example schemas (replace with your own):
+from typing import Optional, Literal
+import datetime as dt
 
 class User(BaseModel):
-    """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
-    """
-    name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
+    name: str = Field(..., description="User's display name")
+    email: Optional[str] = Field(None, description="Email (optional)")
+    country: Optional[str] = Field(None, description="Country code")
 
-class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
-    """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
+class Plan(BaseModel):
+    user_id: str = Field(..., description="Reference to user _id as string")
+    goal_type: Literal["quit", "reduce"] = Field("quit", description="Quit fully or reduce usage")
+    start_date: dt.date = Field(..., description="Plan start date")
+    target_date: Optional[dt.date] = Field(None, description="Target quit date (optional)")
+    baseline_portions_per_day: Optional[float] = Field(None, ge=0, description="Typical daily portions before plan")
+    target_portions_per_day: Optional[float] = Field(None, ge=0, description="Target daily portions if reducing")
 
-# Add your own schemas here:
-# --------------------------------------------------
+class Checkin(BaseModel):
+    user_id: str = Field(..., description="Reference to user _id as string")
+    date: dt.date = Field(..., description="The day this check-in refers to")
+    nicotine_free: bool = Field(..., description="Was the day nicotine-free?")
+    portions_used: Optional[float] = Field(None, ge=0, description="Estimated portions used today")
+    craving_level: Optional[int] = Field(None, ge=1, le=10, description="Craving intensity 1-10")
+    note: Optional[str] = Field(None, description="Optional note")
 
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+class Tip(BaseModel):
+    title: str
+    body: str
